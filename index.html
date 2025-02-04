@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid with Base36 Encoding</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(7, 50px);
+      grid-gap: 5px;
+    }
+
+    .cell {
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: yellow;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      font-size: 18px;
+      color: black;
+    }
+
+    .aqua { background-color: aqua; }
+    .magenta { background-color: magenta; }
+    .yellow { background-color: yellow; }
+
+    #base36-textbox {
+      margin-bottom: 20px;
+      padding: 10px;
+      font-size: 16px;
+      width: 350px;
+    }
+  </style>
+</head>
+<body>
+
+  <input type="text" id="base36-textbox" readonly placeholder="Base36 Representation" />
+  
+  <div id="grid"></div>
+
+  <script>
+    const gridSize = 7;
+    let grid = Array(gridSize * gridSize).fill(3);  // Initialize grid with all 3's (yellow)
+
+    const colorMapping = {
+      1: 'aqua',
+      2: 'magenta',
+      3: 'yellow'
+    };
+
+    // Function to update the Base36 representation of the grid
+    function updateBase36() {
+      const base4String = grid.map(value => value - 1).join('');  // Convert to base-4
+      const base10Value = parseInt(base4String, 4);  // Convert base-4 to base-10
+      const base36String = base10Value.toString(36);  // Convert base-10 to base-36
+      document.getElementById('base36-textbox').value = base36String;
+    }
+
+    // Function to render the grid
+    function renderGrid() {
+      const gridContainer = document.getElementById('grid');
+      gridContainer.innerHTML = '';  // Clear the grid
+
+      grid.forEach((value, index) => {
+        const cell = document.createElement('div');
+        cell.classList.add('cell', colorMapping[value]);
+
+        // Display the value inside the cell (1, 2, or 3)
+        cell.textContent = value;
+
+        // Add click event to change value
+        cell.addEventListener('click', () => {
+          grid[index] = grid[index] % 3 + 1;  // Cycle through 1, 2, 3
+          renderGrid();  // Re-render the grid after the change
+          updateBase36();  // Update base36 representation
+        });
+
+        gridContainer.appendChild(cell);
+      });
+
+      updateBase36();  // Update base36 after rendering
+    }
+
+    // Initialize the grid and render
+    renderGrid();
+  </script>
+
+</body>
+</html>
