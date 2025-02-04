@@ -72,8 +72,8 @@
       // Convert base-10 number to a base-4 string
       let base4String = base10Value.toString(4).padStart(grid.length, '0'); // Ensure it's the correct length
 
-      // Convert base-4 digits into grid values (1, 2, 3)
-      grid = Array.from(base4String).map(digit => parseInt(digit) + 1); // Map base-4 (0,1,2) to (1,2,3)
+      // Directly assign base-4 digits (1, 2, 3)
+      grid = Array.from(base4String).map(digit => parseInt(digit) + 1);  // No mapping, keep 1, 2, 3 as is
 
       renderGrid();  // Re-render grid after updating
     }
@@ -105,7 +105,7 @@
 
     // Function to update the Base36 representation of the grid
     function updateBase36() {
-      const base4String = grid.map(value => value - 1).join('');  // Convert to base-4 string
+      const base4String = grid.join('');  // Directly take the grid string as is
       const base10Value = parseInt(base4String, 4);  // Convert base-4 to base-10
       const base36String = base10Value.toString(36);  // Convert base-10 to base-36
       document.getElementById('base36-textbox').value = base36String;  // Update textbox
