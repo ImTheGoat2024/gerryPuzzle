@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grid with Base36 Encoding</title>
+  <title>Grid with Base36 Decoding</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -46,7 +46,7 @@
 </head>
 <body>
 
-  <input type="text" id="base36-textbox" readonly placeholder="Base36 Representation" />
+  <input type="text" id="base36-textbox" placeholder="Enter Base36 Representation" />
   
   <div id="grid"></div>
 
@@ -60,12 +60,22 @@
       3: 'yellow'
     };
 
-    // Function to update the Base36 representation of the grid
-    function updateBase36() {
-      const base4String = grid.map(value => value - 1).join('');  // Convert to base-4
-      const base10Value = parseInt(base4String, 4);  // Convert base-4 to base-10
-      const base36String = base10Value.toString(36);  // Convert base-10 to base-36
-      document.getElementById('base36-textbox').value = base36String;
+    // Function to decode from Base36 to Base4 and update the grid
+    function updateGridFromBase36() {
+      const base36Value = document.getElementById('base36-textbox').value.trim();
+      if (base36Value === '') return;  // Do nothing if the textbox is empty
+
+      // Convert base36 value to base-10
+      const base10Value = parseInt(base36Value, 36);
+      if (isNaN(base10Value)) return;  // Handle invalid base36 input
+
+      // Convert base-10 number to a base-4 string
+      let base4String = base10Value.toString(4).padStart(grid.length, '0'); // Ensure it's the correct length
+
+      // Convert base-4 digits into grid values (1, 2, 3)
+      grid = Array.from(base4String).map(digit => parseInt(digit) + 1); // Map base-4 (0,1,2) to (1,2,3)
+
+      renderGrid();  // Re-render grid after updating
     }
 
     // Function to render the grid
@@ -93,8 +103,20 @@
       updateBase36();  // Update base36 after rendering
     }
 
+    // Function to update the Base36 representation of the grid
+    function updateBase36() {
+      const base4String = grid.map(value => value - 1).join('');  // Convert to base-4 string
+      const base10Value = parseInt(base4String, 4);  // Convert base-4 to base-10
+      const base36String = base10Value.toString(36);  // Convert base-10 to base-36
+      document.getElementById('base36-textbox').value = base36String;  // Update textbox
+    }
+
     // Initialize the grid and render
     renderGrid();
+
+    // Add an event listener to the textbox to update grid when input changes
+    document.getElementById('base36-textbox').addEventListener('input', updateGridFromBase36);
+
   </script>
 
 </body>
