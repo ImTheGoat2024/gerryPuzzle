@@ -131,6 +131,9 @@
       if (encodedGrid && rows && columns) {
         gridSize.rows = rows;
         gridSize.columns = columns;
+				
+        document.getElementById('rows').value = rows;
+				document.getElementById('columns').value = columns;
 
         const base4String = base36ToBase4(encodedGrid);
         grid = Array.from(base4String).map(Number);  // Convert string to array of numbers
