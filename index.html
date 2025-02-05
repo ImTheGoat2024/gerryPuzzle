@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gerrymandering Puzzle</title>
+  <title>Dynamic Grid Size with Base4 and Base36 Encoding</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -29,37 +29,44 @@
       color: black;
     }
 
-    #grid-values {
-      margin-bottom: 20px;
-      padding: 10px;
-      font-size: 16px;
-      width: 350px;
-    }
-
     .dimension-input {
       width: 50px;
       margin: 0 5px;
     }
+
     .magenta {
       background-color: magenta;
     }
+
     .yellow {
       background-color: yellow;
     }
+
     .aqua {
       background-color: aqua;
+    }
+
+    #copy-button {
+      cursor: pointer;
+      margin-top: 10px;
+      padding: 8px 12px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
 
-  <input type="text" id="grid-values" placeholder="Grid Coding" />
-  
   <div>
-    <input type="number" id="rows" class="dimension-input" min="1" max="25" value="7" />
+    <input type="number" id="rows" class="dimension-input" min="1" max="20" value="7" />
     x
-    <input type="number" id="columns" class="dimension-input" min="1" max="25" value="7" />
+    <input type="number" id="columns" class="dimension-input" min="1" max="20" value="7" />
   </div>
+
+  <button id="copy-button">📋 Copy URL</button>
 
   <div id="grid"></div>
 
@@ -89,82 +96,100 @@
         cell.addEventListener('click', () => {
           grid[index] = (grid[index] % 3) + 1;  // Cycle through 1, 2, 3
           renderGrid();  // Re-render the grid after the change
-          updateGridValues();  // Update the grid values textbox
         });
 
         gridContainer.appendChild(cell);
       });
     }
 
-    // Function to update the grid values textbox with the current grid state in Base36
-    function updateGridValues() {
-      const base4String = grid.join('');  // No separator
+    // Function to encode the grid and copy the URL
+    function copyGridURL() {
+      const base4String = grid.join('');  // Convert grid to a base-4 string
       const base36String = base4ToBase36(base4String);  // Convert to Base36
-      document.getElementById('grid-values').value = base36String;  // Update textbox with Base36 value
+
+      const rows = gridSize.rows;
+      const columns = gridSize.columns;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('grid', base36String);
+      url.searchParams.set('rows', rows);
+      url.searchParams.set('columns', columns);
+
+      // Copy the URL to clipboard
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        alert('URL copied to clipboard!');
+      });
     }
 
-    // Function to update the grid based on input value from the textbox (Base36)
-    function updateGridFromInput() {
-      const inputValue = document.getElementById('grid-values').value.trim();
-      if (/^[0-9a-zA-Z]+$/.test(inputValue)) {
-        // Convert Base36 to Base4
-        const base4String = base36ToBase4(inputValue);
-        // Update the grid based on the input value
+    // Function to decode the grid from URL
+    function decodeGridFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const encodedGrid = params.get('grid');
+      const rows = parseInt(params.get('rows'), 10);
+      const columns = parseInt(params.get('columns'), 10);
+
+      if (encodedGrid && rows && columns) {
+        gridSize.rows = rows;
+        gridSize.columns = columns;
+
+        const base4String = base36ToBase4(encodedGrid);
         grid = Array.from(base4String).map(Number);  // Convert string to array of numbers
+
+        if (grid.length < gridSize.rows * gridSize.columns) {
+          grid = grid.concat(Array(gridSize.rows * gridSize.columns - grid.length).fill(3));  // Fill remaining with 3's
+        } else if (grid.length > gridSize.rows * gridSize.columns) {
+          grid = grid.slice(0, gridSize.rows * gridSize.columns);  // Trim excess values
+        }
+
         renderGrid();  // Re-render the grid
       }
     }
 
-    // Custom function to convert Base4 string to Base36
-    function base4ToBase36(base4String) {
-      let base10Value = 0;
-      for (let i = 0; i < base4String.length; i++) {
-        base10Value = base10Value * 4 + parseInt(base4String[i]);
+    // Convert base-4 string to base-36
+    function base4ToBase36(base4Str) {
+      let decimalValue = BigInt(0);
+      for (let i = 0; i < base4Str.length; i++) {
+        decimalValue = decimalValue * BigInt(4) + BigInt(parseInt(base4Str[i], 10));
       }
-      let base36String = '';
-      while (base10Value > 0) {
-        const remainder = base10Value % 36;
-        base36String = remainder.toString(36) + base36String;  // Convert to Base36 character
-        base10Value = Math.floor(base10Value / 36);
-      }
-      return base36String || '0';  // Return '0' if the string is empty
+      return decimalValue.toString(36);  // Base36 string
     }
 
-    // Custom function to convert Base36 string to Base4
-    function base36ToBase4(base36String) {
-      let base10Value = 0;
-      for (let i = 0; i < base36String.length; i++) {
-        base10Value = base10Value * 36 + parseInt(base36String[i], 36);
+    // Convert base-36 string to base-4
+    function base36ToBase4(base36Str) {
+      let decimalValue = BigInt(0);
+      for (let char of base36Str) {
+        decimalValue = decimalValue * BigInt(36) + BigInt(parseInt(char, 36));
       }
-      let base4String = '';
-      while (base10Value > 0) {
-        const remainder = base10Value % 4;
-        base4String = remainder + base4String;  // Append remainder to Base4 string
-        base10Value = Math.floor(base10Value / 4);
+
+      let base4Str = "";
+      while (decimalValue > 0) {
+        base4Str = (decimalValue % BigInt(4)).toString() + base4Str;
+        decimalValue = decimalValue / BigInt(4);
       }
-      return base4String;  // Return the Base4 string
+
+      return base4Str;
     }
 
     // Function to handle dimension changes
     function updateDimensions() {
       const newRows = parseInt(document.getElementById('rows').value);
-      const newColumns = parseInt(document.getElementById ('columns').value);
+      const newColumns = parseInt(document.getElementById('columns').value);
       if (newRows !== gridSize.rows || newColumns !== gridSize.columns) {
         gridSize.rows = newRows;
         gridSize.columns = newColumns;
         grid = Array(gridSize.rows * gridSize.columns).fill(3);  // Reset grid with new dimensions
         renderGrid();  // Re-render the grid with new dimensions
-        updateGridValues();  // Update the grid values textbox
       }
     }
 
-    // Event listeners for dimension inputs
+    // Event listeners
     document.getElementById('rows').addEventListener('input', updateDimensions);
     document.getElementById('columns').addEventListener('input', updateDimensions);
-    document.getElementById('grid-values').addEventListener('input', updateGridFromInput);
+    document.getElementById('copy-button').addEventListener('click', copyGridURL);
 
     // Initial render of the grid
     renderGrid();
+    decodeGridFromURL();  // Check URL for grid values
   </script>
 </body>
 </html>
